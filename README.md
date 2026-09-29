@@ -40,21 +40,31 @@ Details: [docs/results.md](docs/results.md)
 
 ## Documentation
 
+**Build it**
+
 | Document | Status |
 |---|---|
 | [Bill of materials](docs/bill-of-materials.md) | ✅ |
 | [Wiring](docs/wiring.md) | ✅ (relay supply to confirm) |
 | [Assembly](docs/assembly.md) | ✅ |
 | [Calibration](docs/calibration.md) | ✅ |
-| [Results](docs/results.md) | ✅ |
-| [Architecture](docs/architecture.md) | ✅ |
-| [Specifications](docs/specifications.md) | ✅ |
 | [Power budget](docs/power.md) | ✅ |
-| [Hydroponics basics](docs/hydroponics-basics.md) | ✅ |
-| [Design process](docs/design-process.md) | ✅ |
 | [Remote access](docs/remote-access.md) | ✅ |
 | Firmware (ESPHome) | 🚧 |
 | Home Assistant dashboard and automations | 🚧 |
+
+**Learn more**
+
+| Document | Status |
+|---|---|
+| [Architecture](docs/architecture.md) | ✅ |
+| [Specifications](docs/specifications.md) | ✅ |
+| [Results](docs/results.md) | ✅ |
+| [Hydroponics basics](docs/hydroponics-basics.md) | ✅ |
+| [Case study: Vertigreens](docs/case-study.md) | ✅ |
+| [Design process](docs/design-process.md) | ✅ |
+| [Conclusions](docs/conclusions.md) | ✅ |
+| [References](docs/references.md) | ✅ |
 
 ## Background
 
