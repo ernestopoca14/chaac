@@ -1,56 +1,60 @@
 # Chaac
 
 **Open-source pH & EC monitoring and automatic dosing for hydroponics**
-(ESP8266 + ESPHome + Home Assistant + MQTT)
+(ESP8266 + ESPHome + Home Assistant)
 
 > Named after Chaac, the Maya god of rain.
 
-> 🚧 **Work in progress.** The parts list, wiring, firmware and automations are being added from the original thesis. See [ROADMAP.md](ROADMAP.md).
+> 🚧 **Work in progress.** The firmware and Home Assistant automations are being added. See [ROADMAP.md](ROADMAP.md).
 
 ## What it does
 
 Chaac measures the pH and electrical conductivity (EC) of a hydroponic nutrient solution and automatically doses corrective liquids with peristaltic pumps:
 
-- **pH down / pH up**: keeps pH in the target range (default 5.5–6.5)
-- **Nutrient concentrate**: keeps EC in the target range (default 1.5–2.5 mS/cm)
-- **Dashboard and notifications**: live data, graphs and alerts in Home Assistant
+- **pH down / pH up**: keeps pH in the target range
+- **Nutrient concentrate**: keeps EC above the target
+- **Dashboard and notifications**: live gauges, 12 h graphs and alerts in Home Assistant
+
+## Proven results
+
+Tested on a 5-level commercial rack (68 samples per test):
+
+| | Result |
+|---|---|
+| pH accuracy vs. handheld meter | 0.23 % error |
+| EC accuracy vs. handheld meter | 0.61 % error |
+| Dosing accuracy (5 ml doses) | ≈ 2 % error |
+| Time in range, pH / EC | 97 % / 91 % |
+| Hardware cost per module | ≈ US$325 |
+
+Details: [docs/results.md](docs/results.md)
 
 ## Architecture
 
 ```
-120 V AC ──► 12 V / 24 W PSU ──┬──► 3 × peristaltic pumps (12 V DC) ──► silicone tubing (3 mm ID) ──► reservoir
-                               └──► buck converter ──► ESP8266 (ESPHome)
-                                                          ▲        │
-                                            pH + EC probes ┘        └── Wi-Fi / MQTT ──► Home Assistant (Raspberry Pi)
+120 V AC ──► 12 V / 24 W PSU ──┬──► relays ──► 3 × peristaltic pumps ──► silicone tubing ──► tank
+                               └──► buck (7 V) ──► NodeMCU ESP8266 (ESPHome)
+                                                     ▲            │
+                            pH probe (A0), EC (I²C) ─┘            └── Wi-Fi ──► Home Assistant (Raspberry Pi)
 ```
-
-More details: [docs/architecture.md](docs/architecture.md)
 
 ## Documentation
 
 | Document | Status |
 |---|---|
+| [Bill of materials](docs/bill-of-materials.md) | ✅ |
+| [Wiring](docs/wiring.md) | ✅ (relay supply to confirm) |
+| [Assembly](docs/assembly.md) | ✅ |
+| [Calibration](docs/calibration.md) | ✅ |
+| [Results](docs/results.md) | ✅ |
 | [Architecture](docs/architecture.md) | ✅ |
-| [Specifications](docs/specifications.md) | ✅ targets, results pending |
+| [Specifications](docs/specifications.md) | ✅ |
 | [Power budget](docs/power.md) | ✅ |
 | [Hydroponics basics](docs/hydroponics-basics.md) | ✅ |
 | [Design process](docs/design-process.md) | ✅ |
 | [Remote access](docs/remote-access.md) | ✅ |
-| Bill of materials | 🚧 |
-| Wiring | 🚧 |
-| Assembly | 🚧 |
-| Calibration | 🚧 |
 | Firmware (ESPHome) | 🚧 |
-| Home Assistant automations | 🚧 |
-
-## Repository layout
-
-```
-branding/          Chaac emblem (SVG)
-docs/              Build and background documentation
-firmware/          ESPHome configuration (secrets template included)
-hardware/enclosure OpenSCAD enclosure parts
-```
+| Home Assistant dashboard and automations | 🚧 |
 
 ## Background
 
