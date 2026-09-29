@@ -1,0 +1,21 @@
+# Secrets: never commit
+secrets.yaml
+secrets.h
+*.env
+
+# ESPHome build output
+.esphome/
+firmware/.esphome/
+
+# PlatformIO / editors
+.pio/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenSCAD / slicer output
+*.stl.bak
+*.gcode
