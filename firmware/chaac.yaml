@@ -1,0 +1,185 @@
+# Chaac: ESPHome firmware for one dosing module (NodeMCU V3 / ESP8266)
+# Based on Appendix 9.3 of the thesis. All credentials live in secrets.yaml.
+# License: MIT
+
+substitutions:
+  name: chaac            # change per module: chaac-1, chaac-2, ...
+  friendly_name: Chaac
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp8266:
+  board: nodemcuv2
+  restore_from_flash: true   # keeps pH calibration after reboot
+
+# pH calibration points (raw ADC values). Overwritten by the calibration buttons.
+globals:
+  - id: cal4
+    type: float
+    restore_value: yes
+    initial_value: "680.1"
+  - id: cal7
+    type: float
+    restore_value: yes
+    initial_value: "518.4"
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Optional static IP: uncomment and set your own network values
+  # manual_ip:
+  #   static_ip: 192.168.1.50
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+# Local web page for calibration: http://<module-ip>
+web_server:
+  port: 80
+
+i2c:
+  sda: D2
+  scl: D1
+  scan: true
+  id: bus_ezo
+
+sensor:
+  # Raw analog pH (A0). Median removes spikes, moving average smooths noise.
+  - platform: adc
+    pin: A0
+    id: ph_adc
+    name: "pH raw"
+    raw: true
+    unit_of_measurement: ""
+    update_interval: 1s
+    entity_category: diagnostic
+    filters:
+      - median:
+          window_size: 40
+          send_every: 1
+      - sliding_window_moving_average:
+          window_size: 20
+          send_every: 1
+
+  - platform: template
+    name: "pH cal 4"
+    lambda: return id(cal4);
+    update_interval: 10s
+    entity_category: diagnostic
+  - platform: template
+    name: "pH cal 7"
+    lambda: return id(cal7);
+    update_interval: 10s
+    entity_category: diagnostic
+
+  # Calibrated pH: straight line through the pH 4 and pH 7 points
+  - platform: template
+    id: ph
+    name: "pH"
+    unit_of_measurement: "pH"
+    accuracy_decimals: 2
+    update_interval: 1min
+    lambda: |-
+      if (id(cal4) == id(cal7)) return NAN;
+      return 7.0 - 3.0 * (id(ph_adc).state - id(cal7)) / (id(cal4) - id(cal7));
+    filters:
+      - sliding_window_moving_average:
+          window_size: 100
+          send_every: 1
+
+  # Atlas EZO-EC over I2C (address 0x64 = 100). The board reports uS/cm.
+  - platform: ezo
+    id: ec_ezo
+    name: "EC"
+    address: 100
+    accuracy_decimals: 2
+    unit_of_measurement: "mS/cm"
+    update_interval: 10s
+    filters:
+      - multiply: 0.001   # uS/cm -> mS/cm
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP address"
+
+# Relay inputs are active-low
+output:
+  - platform: gpio
+    pin: D5
+    id: out_pump_nutrients
+    inverted: true
+  - platform: gpio
+    pin: D6
+    id: out_pump_ph_down
+    inverted: true
+  - platform: gpio
+    pin: D7
+    id: out_pump_ph_up
+    inverted: true
+
+switch:
+  - platform: output
+    name: "Pump nutrients"
+    output: out_pump_nutrients
+    restore_mode: ALWAYS_OFF
+  - platform: output
+    name: "Pump pH down"
+    output: out_pump_ph_down
+    restore_mode: ALWAYS_OFF
+  - platform: output
+    name: "Pump pH up"
+    output: out_pump_ph_up
+    restore_mode: ALWAYS_OFF
+
+button:
+  - platform: template
+    name: "Calibrate pH 4"
+    entity_category: config
+    on_press:
+      - lambda: id(cal4) = id(ph_adc).state;
+  - platform: template
+    name: "Calibrate pH 7"
+    entity_category: config
+    on_press:
+      - lambda: id(cal7) = id(ph_adc).state;
+
+  - platform: template
+    name: "EC calibrate dry"
+    entity_category: config
+    on_press:
+      - lambda: id(ec_ezo).send_custom("cal,dry");
+  - platform: template
+    name: "EC calibrate low (12880)"
+    entity_category: config
+    on_press:
+      - lambda: id(ec_ezo).send_custom("cal,low,12880");
+  - platform: template
+    name: "EC calibrate high (80000)"
+    entity_category: config
+    on_press:
+      - lambda: id(ec_ezo).send_custom("cal,high,80000");
+  - platform: template
+    name: "EC info"
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(ec_ezo).send_custom("i");
+
+  - platform: restart
+    name: "Restart"

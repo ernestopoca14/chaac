@@ -1,0 +1,71 @@
+# Chaac dashboard (based on Appendix 9.4 of the thesis). License: MIT
+# Home Assistant: Settings -> Dashboards -> Add dashboard -> (three dots) Raw configuration editor
+
+title: Chaac
+views:
+  - title: Chaac
+    path: chaac
+    cards:
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.chaac_ph
+            name: pH
+            min: 0
+            max: 14
+            needle: true
+            segments:
+              - {from: 0, color: "#db4437"}
+              - {from: 5.4, color: "#43a047"}
+              - {from: 6.2, color: "#db4437"}
+          - type: gauge
+            entity: sensor.chaac_ec
+            name: EC (mS/cm)
+            min: 0
+            max: 2.5
+            needle: true
+            segments:
+              - {from: 0, color: "#db4437"}
+              - {from: 1.0, color: "#43a047"}
+              - {from: 2.2, color: "#ffa600"}
+
+      - type: history-graph
+        title: pH (12 h)
+        hours_to_show: 12
+        entities:
+          - sensor.chaac_ph
+
+      - type: history-graph
+        title: EC (12 h)
+        hours_to_show: 12
+        entities:
+          - sensor.chaac_ec
+
+      - type: history-graph
+        title: Pumps (24 h)
+        hours_to_show: 24
+        entities:
+          - switch.chaac_pump_ph_down
+          - switch.chaac_pump_ph_up
+          - switch.chaac_pump_nutrients
+
+      - type: entities
+        title: Settings
+        entities:
+          - input_number.chaac_ph_target
+          - input_number.chaac_ph_band
+          - input_number.chaac_ec_min
+          - input_number.chaac_dose_interval
+          - input_number.chaac_ph_dose_seconds
+          - input_number.chaac_ec_dose_seconds
+
+      - type: entities
+        title: Automations and manual control
+        entities:
+          - automation.chaac_ph_high_dose_ph_down
+          - automation.chaac_ph_low_dose_ph_up
+          - automation.chaac_ec_low_dose_nutrients
+          - automation.chaac_attention_required
+          - switch.chaac_pump_ph_down
+          - switch.chaac_pump_ph_up
+          - switch.chaac_pump_nutrients

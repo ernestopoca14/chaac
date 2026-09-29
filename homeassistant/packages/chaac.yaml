@@ -1,0 +1,145 @@
+# Chaac: Home Assistant package (setpoints + control automations)
+# Based on Appendix 9.5 of the thesis. License: MIT
+#
+# Install: copy to /config/packages/chaac.yaml and add to configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# Entity names assume the ESPHome device is called "chaac".
+
+input_number:
+  chaac_ph_target:
+    name: pH target
+    min: 4.5
+    max: 7.5
+    step: 0.1
+    initial: 5.8
+    mode: box
+  chaac_ph_band:
+    name: pH tolerance (±)
+    min: 0.1
+    max: 1.0
+    step: 0.1
+    initial: 0.2
+    mode: box
+  chaac_ec_min:
+    name: EC minimum (mS/cm)
+    min: 0.2
+    max: 3.0
+    step: 0.1
+    initial: 1.0
+    mode: box
+  chaac_dose_interval:
+    name: Minimum time between doses (min)
+    min: 10
+    max: 240
+    step: 5
+    initial: 40
+    mode: box
+  chaac_ph_dose_seconds:
+    name: pH dose (s)
+    min: 1
+    max: 20
+    step: 1
+    initial: 3        # 3 s ≈ 5 ml with NKP-DC-S10B
+    mode: box
+  chaac_ec_dose_seconds:
+    name: Nutrient dose (s)
+    min: 1
+    max: 60
+    step: 1
+    initial: 10
+    mode: box
+
+automation:
+  - id: chaac_ph_high
+    alias: Chaac - pH high (dose pH down)
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: /5
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('sensor.chaac_ph') | float(0) >
+             states('input_number.chaac_ph_target') | float + states('input_number.chaac_ph_band') | float }}
+      - condition: template
+        value_template: >
+          {{ (now() - states.switch.chaac_pump_ph_down.last_changed).total_seconds() / 60 >=
+             states('input_number.chaac_dose_interval') | float }}
+    action:
+      - service: switch.turn_on
+        target: {entity_id: switch.chaac_pump_ph_down}
+      - delay:
+          seconds: "{{ states('input_number.chaac_ph_dose_seconds') | int }}"
+      - service: switch.turn_off
+        target: {entity_id: switch.chaac_pump_ph_down}
+
+  - id: chaac_ph_low
+    alias: Chaac - pH low (dose pH up)
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: /5
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('sensor.chaac_ph') | float(14) <
+             states('input_number.chaac_ph_target') | float - states('input_number.chaac_ph_band') | float }}
+      - condition: template
+        value_template: >
+          {{ (now() - states.switch.chaac_pump_ph_up.last_changed).total_seconds() / 60 >=
+             states('input_number.chaac_dose_interval') | float }}
+    action:
+      - service: switch.turn_on
+        target: {entity_id: switch.chaac_pump_ph_up}
+      - delay:
+          seconds: "{{ states('input_number.chaac_ph_dose_seconds') | int }}"
+      - service: switch.turn_off
+        target: {entity_id: switch.chaac_pump_ph_up}
+
+  - id: chaac_ec_low
+    alias: Chaac - EC low (dose nutrients)
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: /5
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('sensor.chaac_ec') | float(99) < states('input_number.chaac_ec_min') | float }}
+      - condition: template
+        value_template: >
+          {{ (now() - states.switch.chaac_pump_nutrients.last_changed).total_seconds() / 60 >=
+             states('input_number.chaac_dose_interval') | float }}
+    action:
+      - service: switch.turn_on
+        target: {entity_id: switch.chaac_pump_nutrients}
+      - delay:
+          seconds: "{{ states('input_number.chaac_ec_dose_seconds') | int }}"
+      - service: switch.turn_off
+        target: {entity_id: switch.chaac_pump_nutrients}
+
+  # Alert if pH or EC stays out of range for 2 h (dosing isn't keeping up,
+  # a bottle is empty, or a probe needs calibration).
+  - id: chaac_attention
+    alias: Chaac - attention required
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >
+          {% set ph = states('sensor.chaac_ph') | float(0) %}
+          {% set t = states('input_number.chaac_ph_target') | float %}
+          {{ ph > t + 0.4 or ph < t - 0.4 }}
+        for: {hours: 2}
+      - platform: template
+        value_template: >
+          {{ states('sensor.chaac_ec') | float(99) < states('input_number.chaac_ec_min') | float }}
+        for: {hours: 2}
+    action:
+      - service: notify.notify
+        data:
+          title: "Chaac: attention required"
+          message: >
+            pH {{ states('sensor.chaac_ph') }} / EC {{ states('sensor.chaac_ec') }} mS/cm
+            have been out of range for more than 2 h. Check the bottles, pumps and probes.

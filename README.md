@@ -5,15 +5,13 @@
 
 > Named after Chaac, the Maya god of rain.
 
-> 🚧 **Work in progress.** The firmware and Home Assistant automations are being added. See [ROADMAP.md](ROADMAP.md).
-
 ## What it does
 
 Chaac measures the pH and electrical conductivity (EC) of a hydroponic nutrient solution and automatically doses corrective liquids with peristaltic pumps:
 
 - **pH down / pH up**: keeps pH in the target range
 - **Nutrient concentrate**: keeps EC above the target
-- **Dashboard and notifications**: live gauges, 12 h graphs and alerts in Home Assistant
+- **Dashboard and notifications**: live gauges, 12 h graphs, adjustable setpoints and alerts in Home Assistant
 
 ## Proven results
 
@@ -29,6 +27,13 @@ Tested on a 5-level commercial rack (68 samples per test):
 
 Details: [docs/results.md](docs/results.md)
 
+## Quick start
+
+1. Buy the parts: [docs/bill-of-materials.md](docs/bill-of-materials.md)
+2. Wire and assemble: [docs/wiring.md](docs/wiring.md), [docs/assembly.md](docs/assembly.md)
+3. Flash the firmware and set up Home Assistant: [docs/software-setup.md](docs/software-setup.md)
+4. Calibrate: [docs/calibration.md](docs/calibration.md)
+
 ## Architecture
 
 ```
@@ -38,6 +43,16 @@ Details: [docs/results.md](docs/results.md)
                             pH probe (A0), EC (I²C) ─┘            └── Wi-Fi ──► Home Assistant (Raspberry Pi)
 ```
 
+## Repository layout
+
+```
+firmware/            ESPHome config (chaac.yaml) + secrets template
+homeassistant/       Package with setpoints + automations, dashboard
+docs/                Build guides and background
+hardware/enclosure/  OpenSCAD lid with the Chaac emblem
+branding/            Emblem artwork
+```
+
 ## Documentation
 
 **Build it**
@@ -45,13 +60,12 @@ Details: [docs/results.md](docs/results.md)
 | Document | Status |
 |---|---|
 | [Bill of materials](docs/bill-of-materials.md) | ✅ |
-| [Wiring](docs/wiring.md) | ✅ (relay supply to confirm) |
+| [Wiring](docs/wiring.md) | ✅ |
 | [Assembly](docs/assembly.md) | ✅ |
+| [Software setup](docs/software-setup.md) | ✅ |
 | [Calibration](docs/calibration.md) | ✅ |
 | [Power budget](docs/power.md) | ✅ |
 | [Remote access](docs/remote-access.md) | ✅ |
-| Firmware (ESPHome) | 🚧 |
-| Home Assistant dashboard and automations | 🚧 |
 
 **Learn more**
 
@@ -85,9 +99,9 @@ Chaac started as the graduation project *Automatización de procesos de medició
 
 ## Licenses
 
-- **Code** (`firmware/`, automations, scripts): [MIT](LICENSE)
+- **Code** (`firmware/`, `homeassistant/`): [MIT](LICENSE)
 - **Documentation and hardware** (`docs/`, `hardware/`, `branding/`): [CC BY-SA 4.0](LICENSE-docs-hardware.md)
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [ROADMAP](ROADMAP.md).
