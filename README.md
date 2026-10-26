@@ -36,12 +36,39 @@ Details: [docs/results.md](docs/results.md)
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    subgraph POWER["⚡ Power"]
+        AC["120 V AC outlet"] ==> PSU["12 V / 24 W power supply"]
+        PSU ==> BUCK["Buck converter, set to 7 V"]
+    end
+
+    subgraph SENSE["🔬 Sensing"]
+        PH["pH probe<br/>analog, pin A0"]
+        EC["EC sensor<br/>Atlas EZO-EC, I²C"]
+    end
+
+    MCU["🧠 NodeMCU ESP8266<br/>ESPHome firmware"]
+
+    subgraph DOSE["💧 Dosing"]
+        RELAY["3-channel relay"]
+        PUMPS["3 × peristaltic pumps<br/>1 nutrients · 2 pH down · 3 pH up"]
+        TANK[("Nutrient tank")]
+    end
+
+    HA["🏠 Home Assistant on a Raspberry Pi<br/>setpoints, automations, dashboard"]
+
+    BUCK == 7 V ==> MCU
+    PSU == 12 V ==> RELAY
+    PH --> MCU
+    EC --> MCU
+    MCU -- "switch D5 / D6 / D7" --> RELAY
+    RELAY ==> PUMPS
+    PUMPS -- silicone tubing --> TANK
+    MCU -. "Wi-Fi, ESPHome API" .- HA
 ```
-120 V AC ──► 12 V / 24 W PSU ──┬──► relays ──► 3 × peristaltic pumps ──► silicone tubing ──► tank
-                               └──► buck (7 V) ──► NodeMCU ESP8266 (ESPHome)
-                                                     ▲            │
-                            pH probe (A0), EC (I²C) ─┘            └── Wi-Fi ──► Home Assistant (Raspberry Pi)
-```
+
+Thick lines carry power, thin lines carry signals, the dotted line is wireless. Pin-by-pin wiring: [docs/wiring.md](docs/wiring.md).
 
 ## Repository layout
 
