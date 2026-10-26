@@ -36,11 +36,18 @@ Details: [docs/results.md](docs/results.md)
 
 ## Architecture
 
-```
-120 V AC ──► 12 V / 24 W PSU ──┬──► relays ──► 3 × peristaltic pumps ──► silicone tubing ──► tank
-                               └──► buck (7 V) ──► NodeMCU ESP8266 (ESPHome)
-                                                     ▲            │
-                            pH probe (A0), EC (I²C) ─┘            └── Wi-Fi ──► Home Assistant (Raspberry Pi)
+```mermaid
+flowchart LR
+    AC[120 V AC outlet] --> PSU[12 V / 24 W<br/>power supply]
+    PSU --> R[Relay module]
+    PSU --> B[Buck converter<br/>set to 7 V]
+    B --> MCU[NodeMCU ESP8266<br/>ESPHome]
+    PH[pH probe<br/>analog, A0] --> MCU
+    EC[EC sensor<br/>Atlas EZO-EC, I²C] --> MCU
+    MCU -- switches --> R
+    R --> P[3 × peristaltic pumps]
+    P -- silicone tubing --> T[(Tank)]
+    MCU <-- ESPHome API over Wi-Fi --> HA[Home Assistant<br/>Raspberry Pi]
 ```
 
 ## Repository layout

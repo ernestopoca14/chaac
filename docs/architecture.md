@@ -20,7 +20,7 @@ Peristaltic pumps were chosen because the liquid never touches moving parts. Tha
 | pH sensing | Analog pH probe + signal board |
 | EC sensing | EC sensor |
 | Controller | ESP8266 running ESPHome (an ESP32 also works) |
-| Connectivity | Wi-Fi → MQTT → Home Assistant on a Raspberry Pi |
+| Connectivity | Wi-Fi → ESPHome native API → Home Assistant on a Raspberry Pi |
 
 ## Data flow
 
@@ -28,7 +28,7 @@ Peristaltic pumps were chosen because the liquid never touches moving parts. Tha
 flowchart LR
   P[pH probe] --> E[ESP8266 / ESPHome]
   C[EC sensor] --> E
-  E -- MQTT / API --> H[Home Assistant]
+  E -- ESPHome API --> H[Home Assistant]
   H -- automations --> E
   E --> M1[Pump: pH down]
   E --> M2[Pump: pH up]
